@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Library Management System</title>
+
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --card: #ffffff;
+            --accent: #2b7cff;
+            --text: #222;
+            --muted: #555;
+            --border: #dce3ec;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        header {
+            background: linear-gradient(135deg, #2b7cff 0%, #5bb1ff 100%);
+            color: white;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        header h1 { margin: 0.2rem 0; font-size: 2rem; }
+        header p { margin: 0.2rem 0 0; color: rgba(255,255,255,0.85); }
+        .user-info {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            color: white;
+        }
+        .user-info button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .user-info button:hover { background: rgba(255,255,255,0.3); }
+        main {
+            max-width: 1200px;
+            margin: -2rem auto 2rem;
+            padding: 0 1.5rem 2rem;
+        }
+        .grid {
+            display: grid;
+            gap: 1.25rem;
+        }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.4rem;
+            box-shadow: 0 16px 45px rgba(15, 23, 42, 0.08);
+        }
+        .card h2 { margin-top: 0; }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 1rem;
+        }
+        .field label { font-size: 0.95rem; color: var(--muted); }
+        .field input, .field select, .field button, .field textarea {
+            width: 100%;
+            padding: 0.95rem 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text);
+            font: inherit;
+        }
+        button.primary {
+            background: var(--accent);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button.primary:hover { opacity: 0.95; }
+        button.secondary {
+            background: #6b7280;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button.secondary:hover { opacity: 0.95; }
+        .message {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .message.success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .message.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.75rem;
+        }
+        thead th {
+            text-align: left;
+            padding: 0.85rem 0.75rem;
+            color: var(--muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+        tbody tr:hover { background: #f8fbff; }
+        td {
+            padding: 0.9rem 0.75rem;
+            border-bottom: 1px solid #eef2f7;
+            vertical-align: top;
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.7rem;
+            border-radius: 999px;
+            background: #eff7ff;
+            color: #1d5ee8;
+            font-size: 0.85rem;
+        }
+        .status.available { background: #d1fae5; color: #065f46; }
+        .status.borrowed { background: #fee2e2; color: #991b1b; }
+        .actions button {
+            margin-right: 0.3rem;
+            border: 1px solid var(--border);
+            background: #fff;
+            cursor: pointer;
+            border-radius: 10px;
+            padding: 0.55rem 0.75rem;
+        }
+        .actions button:hover { background: #f4f7fb; }
+        .note {
+            margin: 0.75rem 0 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .assistant-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .assistant-messages {
+            min-height: 220px;
+            max-height: 320px;
+            overflow-y: auto;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: #f8fbff;
+        }
+        .assistant-message {
+            margin-bottom: 0.85rem;
+            padding: 0.75rem 1rem;
+            border-radius: 16px;
+            line-height: 1.5;
+            max-width: 85%;
+        }
+        .assistant-message.assistant-user {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            align-self: flex-end;
+        }
+        .assistant-message.assistant-bot {
+            background: #eff7ff;
+            border: 1px solid #dce3ec;
+            align-self: flex-start;
+        }
+        .assistant-form {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .assistant-form input {
+            flex: 1;
+        }
+        @media (max-width: 840px) {
+            .grid-3 { grid-template-columns: 1fr; }
+            main { margin-top: 1rem; }
+            .user-info { position: static; text-align: center; margin-bottom: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Library Management System</h1>
+        <p>Manage your library collection and borrowing records</p>
+        <div class="user-info" id="userInfo" style="display: none;">
+            <span id="userName"></span>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Public Book Catalog (always visible) -->
+        <div class="card">
+            <h2>📚 Book Catalog</h2>
+            <div class="field">
+                <label for="searchInput">Search by title, author, or ISBN</label>
+                <input id="searchInput" type="search" placeholder="Search books..." />
+            </div>
+
+            <div id="booksList">
+                <div id="loadingMessage">Loading books...</div>
+                <table id="bookTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Title</th><th>Author</th><th>Status</th><th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AI Assistant -->
+        <div class="card">
+            <h2>🤖 Library Assistant</h2>
+            <div id="assistantPanel" class="assistant-panel">
+                <div id="assistantMessages" class="assistant-messages">
+                    <div class="assistant-message assistant-bot">Hi there! Ask me about borrowing, returning, adding books, or how the library works.</div>
+                </div>
+                <form id="assistantForm" class="assistant-form">
+                    <input id="assistantInput" type="text" placeholder="Ask the assistant..." required />
+                    <button class="primary" type="submit">Send</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Login/Register Section (shown when not logged in) -->
+        <div id="authSection" class="card" style="display: none;">
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('login')">Login</div>
+                <div class="tab" onclick="showTab('register')">Register</div>
+            </div>
+
+            <div id="loginTab" class="tab-content active">
+                <h2>Login to Borrow Books</h2>
+                <form id="loginForm">
+                    <div class="field">
+                        <label for="loginUsername">Username or Email</label>
+                        <input id="loginUsername" name="username" required />
+                    </div>
+                    <div class="field">
+                        <label for="loginPassword">Password</label>
+                        <input id="loginPassword" name="password" type="password" required />
+                    </div>
+                    <button class="primary" type="submit">Login</button>
+                </form>
+            </div>
+
+            <div id="registerTab" class="tab-content">
+                <h2>Register New Account</h2>
+                <form id="registerForm">
+                    <div class="field">
+                        <label for="regUsername">Username</label>
+                        <input id="regUsername" name="username" required />
+                    </div>
+                    <div class="field">
+                        <label for="regEmail">Email</label>
+                        <input id="regEmail" name="email" type="email" required />
+                    </div>
+                    <div class="field">
+                        <label for="regFullName">Full Name</label>
+                        <input id="regFullName" name="full_name" required />
+                    </div>
+                    <div class="field">
+                        <label for="regPhone">Phone (optional)</label>
+                        <input id="regPhone" name="phone" />
+                    </div>
+                    <div class="field">
+                        <label for="regPassword">Password</label>
+                        <input id="regPassword" name="password" type="password" required />
+                    </div>
+                    <button class="primary" type="submit">Register</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Authenticated User Section (shown when logged in) -->
+        <div id="appSection" style="display: none;">
+            <div class="grid grid-3">
+                <!-- Add Book (Admin/Librarian) -->
+                <section class="card">
+                    <h2>➕ Add New Book</h2>
+                    <form id="addBookForm">
+                        <div class="field">
+                            <label for="title">Title</label>
+                            <input id="title" name="title" required />
+                        </div>
+                        <div class="field">
+                            <label for="author">Author</label>
+                            <input id="author" name="author" required />
+                        </div>
+                        <div class="field">
+                            <label for="isbn">ISBN</label>
+                            <input id="isbn" name="isbn" required />
+                        </div>
+                        <div class="field">
+                            <label for="year">Publication Year</label>
+                            <input id="year" name="year" type="number" min="1000" max="2099" />
+                        </div>
+                        <div class="field">
+                            <label for="genre">Genre</label>
+                            <input id="genre" name="genre" />
+                        </div>
+                        <button class="primary" type="submit">Add Book</button>
+                    </form>
+                </section>
+
+                <!-- My Books -->
+                <section class="card">
+                    <h2>📖 My Borrowed Books</h2>
+                    <div id="myBooks">
+                        <div id="loadingMyBooks">Loading your books...</div>
+                        <table id="myBooksTable" style="display:none;">
+                            <thead>
+                                <tr>
+                                    <th>Title</th><th>Author</th><th>Due Date</th><th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- User Profile -->
+                <section class="card">
+                    <h2>👤 My Profile</h2>
+                    <div id="userProfile">
+                        <div id="loadingProfile">Loading profile...</div>
+                        <div id="profileInfo" style="display:none;">
+                            <p><strong>Name:</strong> <span id="profileName"></span></p>
+                            <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+                            <p><strong>Username:</strong> <span id="profileUsername"></span></p>
+                            <p><strong>Phone:</strong> <span id="profilePhone"></span></p>
+                            <p><strong>Member since:</strong> <span id="profileJoined"></span></p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Global state
+        let currentUser = null;
+        let allBooks = [];
+
+        // DOM elements
+        const authSection = document.getElementById('authSection');
+        const appSection = document.getElementById('appSection');
+        const userInfo = document.getElementById('userInfo');
+        const userName = document.getElementById('userName');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const addBookForm = document.getElementById('addBookForm');
+        const searchInput = document.getElementById('searchInput');
+        const bookTable = document.getElementById('bookTable');
+        const bookTableBody = bookTable.querySelector('tbody');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const myBooksTable = document.getElementById('myBooksTable');
+        const myBooksBody = myBooksTable.querySelector('tbody');
+        const loadingMyBooks = document.getElementById('loadingMyBooks');
+        const loadingProfile = document.getElementById('loadingProfile');
+        const profileInfo = document.getElementById('profileInfo');
+        const assistantForm = document.getElementById('assistantForm');
+        const assistantInput = document.getElementById('assistantInput');
+        const assistantMessages = document.getElementById('assistantMessages');
+
+        // Initialize app
+        async function init() {
+            // Always show book catalog
+            fetchBooks();
+
+            // Check if user is logged in
+            try {
+                const response = await fetch('api/users.php');
+                if (response.ok) {
+                    const user = await response.json();
+                    loginSuccess(user);
+                } else {
+                    showPublicView();
+                }
+            } catch (error) {
+                showPublicView();
+            }
+        }
+
+        // Show public view (books visible, auth hidden)
+        function showPublicView() {
+            authSection.style.display = 'block';
+            appSection.style.display = 'none';
+            userInfo.style.display = 'none';
+        }
+
+        // Show authenticated view
+        function showAuthenticatedView() {
+            authSection.style.display = 'none';
+            appSection.style.display = 'block';
+            userInfo.style.display = 'flex';
+            fetchMyBooks();
+            fetchUserProfile();
+        }
+
+        // Login success
+        function loginSuccess(user) {
+            currentUser = user;
+            userName.textContent = `Welcome, ${user.full_name}`;
+            showAuthenticatedView();
+            fetchBooks(); // Refresh to show borrow buttons
+        }
+
+        // Tab switching
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tabName === 'login') {
+                document.querySelector('.tab:first-child').classList.add('active');
+                document.getElementById('loginTab').classList.add('active');
+            } else {
+                document.querySelector('.tab:last-child').classList.add('active');
+                document.getElementById('registerTab').classList.add('active');
+            }
+        }
+
+        // Login form handler
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(loginForm);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('api/users.php?action=login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // Fetch user info
+                    const userResponse = await fetch('api/users.php');
+                    const user = await userResponse.json();
+                    loginSuccess(user);
+                } else {
+                    alert(result.error || 'Login failed');
+                }
+            } catch (error) {
+                alert('Login failed');
+            }
+        });
+
+        // Register form handler
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(registerForm);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('api/users.php?action=register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Registration successful! You are now logged in.');
+                    // Fetch user info
+                    const userResponse = await fetch('api/users.php');
+                    const user = await userResponse.json();
+                    loginSuccess(user);
+                } else {
+                    alert(result.error || 'Registration failed');
+                }
+            } catch (error) {
+                alert('Registration failed');
+            }
+        });
+
+            // Assistant form handler
+            assistantForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const question = assistantInput.value.trim();
+                if (!question) return;
+
+                addAssistantMessage(question, 'user');
+                assistantInput.value = '';
+                const answer = generateAssistantResponse(question);
+                setTimeout(() => {
+                    addAssistantMessage(answer, 'bot');
+                }, 250);
+            });
+
+        // Add a message to the assistant chat
+        function addAssistantMessage(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.className = `assistant-message assistant-${sender}`;
+            messageElement.textContent = message;
+            assistantMessages.appendChild(messageElement);
+            assistantMessages.scrollTop = assistantMessages.scrollHeight;
+        }
+
+        function generateAssistantResponse(question) {
+            const text = question.toLowerCase();
+
+            if (text.includes('borrow') || text.includes('check out')) {
+                return currentUser
+                    ? 'To borrow a book, find an available title and click Borrow. The due date is 14 days from the borrow date.'
+                    : 'Please login first to borrow books. Use the Login tab to access borrowing features.';
+            }
+            if (text.includes('return')) {
+                return 'You can return a book from the My Borrowed Books section once you are logged in.';
+            }
+            if (text.includes('add book') || text.includes('new book')) {
+                return currentUser
+                    ? 'Use the Add New Book form to add a book to the catalog. Enter title, author, ISBN, year and genre.'
+                    : 'You need to login to add books. Please register or login first.';
+            }
+            if (text.includes('search') || text.includes('find')) {
+                return 'Use the search box above to look for books by title, author, or ISBN.';
+            }
+            if (text.includes('due') || text.includes('overdue')) {
+                return 'Your borrowed books show due dates in My Borrowed Books. Overdue items are highlighted in red.';
+            }
+            if (text.includes('help') || text.includes('how')) {
+                return 'I can help answer questions about borrowing, returning, searching, and account management in the library system.';
+            }
+            if (text.includes('account') || text.includes('profile')) {
+                return 'Visit the My Profile section after logging in to see your account details.';
+            }
+            return 'I can help with library actions like borrowing, returning, searching books, or account questions. Try asking one of those!';
+        }
+
+        // Fetch user's profile information
+        async function fetchUserProfile() {
+            loadingProfile.textContent = 'Loading profile...';
+            profileInfo.style.display = 'none';
+            try {
+                const response = await fetch('api/users.php');
+                const user = await response.json();
+
+                loadingProfile.style.display = 'none';
+                profileInfo.style.display = 'block';
+
+                document.getElementById('profileName').textContent = user.full_name;
+                document.getElementById('profileEmail').textContent = user.email;
+                document.getElementById('profileUsername').textContent = user.username;
+                document.getElementById('profilePhone').textContent = user.phone || 'Not provided';
+                document.getElementById('profileJoined').textContent = new Date(user.created_at).toLocaleDateString();
+            } catch (error) {
+                loadingProfile.textContent = 'Unable to load profile.';
+                console.error(error);
+            }
+        }
+
+        // Logout
+        async function logout() {
+            try {
+                await fetch('api/users.php', { method: 'DELETE' });
+            } catch (error) {
+                // Ignore
+            }
+            currentUser = null;
+            showPublicView();
+            fetchBooks(); // Refresh to hide borrow buttons
+        }
+
+        // Fetch books
+        async function fetchBooks(query = '') {
+            loadingMessage.textContent = 'Loading books...';
+            bookTable.style.display = 'none';
+            try {
+                const response = await fetch(`api/books.php?search=${encodeURIComponent(query)}`);
+                allBooks = await response.json();
+                renderBookTable(allBooks);
+            } catch (error) {
+                loadingMessage.textContent = 'Unable to load books.';
+                console.error(error);
+            }
+        }
+
+        // Render book table
+        function renderBookTable(books) {
+            bookTableBody.innerHTML = '';
+            if (!books.length) {
+                loadingMessage.textContent = 'No books found.';
+                return;
+            }
+
+            loadingMessage.style.display = 'none';
+            bookTable.style.display = 'table';
+
+            books.forEach(book => {
+                const row = document.createElement('tr');
+                const status = book.available_copies > 0 ? 'available' : 'borrowed';
+                const statusText = book.available_copies > 0 ? 'Available' : 'Not Available';
+
+                let actions = `<button onclick="viewBook(${book.id})">View Details</button>`;
+
+                // Show borrow button only if logged in and book is available
+                if (currentUser && book.available_copies > 0) {
+                    actions = `<button onclick="borrowBook(${book.id})">Borrow</button> ${actions}`;
+                } else if (!currentUser && book.available_copies > 0) {
+                    actions = `<button onclick="showLoginPrompt()">Login to Borrow</button> ${actions}`;
+                }
+
+                row.innerHTML = `
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                    <td><span class="status ${status}">${statusText}</span></td>
+                    <td class="actions">${actions}</td>
+                `;
+                bookTableBody.appendChild(row);
+            });
+        }
+
+        // Fetch user's borrowed books
+        async function fetchMyBooks() {
+            loadingMyBooks.textContent = 'Loading your books...';
+            myBooksTable.style.display = 'none';
+            try {
+                const response = await fetch('api/lending.php');
+                const lendings = await response.json();
+                renderMyBooks(lendings);
+            } catch (error) {
+                loadingMyBooks.textContent = 'Unable to load your books.';
+                console.error(error);
+            }
+        }
+
+        // Render user's books
+        function renderMyBooks(lendings) {
+            myBooksBody.innerHTML = '';
+            if (!lendings.length) {
+                loadingMyBooks.textContent = 'You have no borrowed books.';
+                return;
+            }
+
+            loadingMyBooks.style.display = 'none';
+            myBooksTable.style.display = 'table';
+
+            lendings.forEach(lending => {
+                const row = document.createElement('tr');
+                const dueDate = new Date(lending.due_date);
+                const isOverdue = !lending.is_returned && dueDate < new Date();
+
+                row.innerHTML = `
+                    <td>${lending.title}</td>
+                    <td>${lending.author}</td>
+                    <td ${isOverdue ? 'style="color: var(--error); font-weight: bold;"' : ''}>
+                        ${lending.is_returned ? 'Returned' : dueDate.toLocaleDateString()}
+                        ${isOverdue ? ' (Overdue)' : ''}
+                    </td>
+                    <td class="actions">
+                        ${!lending.is_returned ? `<button onclick="returnBook(${lending.id})">Return</button>` : ''}
+                    </td>
+                `;
+                myBooksBody.appendChild(row);
+            });
+        }
+
+        // Borrow book
+        async function borrowBook(bookId) {
+            try {
+                const response = await fetch('api/lending.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ book_id: bookId })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Book borrowed successfully!');
+                    fetchBooks();
+                    fetchMyBooks();
+                } else {
+                    alert(result.error || 'Failed to borrow book');
+                }
+            } catch (error) {
+                alert('Failed to borrow book');
+            }
+        }
+
+        // Return book
+        async function returnBook(lendingId) {
+            try {
+                const response = await fetch('api/lending.php', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lending_id: lendingId })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Book returned successfully!');
+                    fetchBooks();
+                    fetchMyBooks();
+                } else {
+                    alert(result.error || 'Failed to return book');
+                }
+            } catch (error) {
+                alert('Failed to return book');
+            }
+        }
+
+        // View book details
+        function viewBook(bookId) {
+            const book = allBooks.find(b => b.id == bookId);
+            if (book) {
+                alert(`Title: ${book.title}\nAuthor: ${book.author}\nISBN: ${book.isbn}\nYear: ${book.publication_year || 'N/A'}\nGenre: ${book.genre || 'N/A'}\nAvailable: ${book.available_copies}/${book.total_copies}`);
+            }
+        }
+
+        // Add book form handler
+        addBookForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(addBookForm);
+            const data = Object.fromEntries(formData);
+
+            try {
+                const response = await fetch('api/books.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Book added successfully!');
+                    addBookForm.reset();
+                    fetchBooks();
+                } else {
+                    alert(result.error || 'Failed to add book');
+                }
+            } catch (error) {
+                alert('Failed to add book');
+            }
+        });
+
+        // Search handler
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value;
+            fetchBooks(query);
+        });
+
+        // Initialize on page load
+        init();
+    </script>
+</body>
+</html>
